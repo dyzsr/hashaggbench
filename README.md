@@ -4,7 +4,7 @@ For [pull/19807](https://github.com/pingcap/tidb/pull/19807), `set.SyncSet` can 
 This repository benchmarked both implementation with self-generated input data.
 
 Data generation resides in [`data_gen.go`](https://github.com/dyzsr/hashaggbench/blob/master/data_gen.go),
-and benchmark is in [hashagg_test.go](https://github.com/dyzsr/hashaggbench/blob/master/hashagg_test.go)
+and benchmark is in [`hashagg_test.go`](https://github.com/dyzsr/hashaggbench/blob/master/hashagg_test.go)
 
 ## Usage
 
