@@ -86,7 +86,7 @@ Mix/table:dense,funcs:[avg_distinct_count_distinct_group_concat_sum_distinct],gr
 
 Tables
 
-```
+``` mysql
 mysql> desc dense;
 +-------+---------+------+------+---------+-------+
 | Field | Type    | Null | Key  | Default | Extra |
