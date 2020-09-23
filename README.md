@@ -86,6 +86,8 @@ Mix/table:dense,funcs:[avg_distinct_count_distinct_group_concat_sum_distinct],gr
 
 Tables
 
+* dense: 10000000 rows, NDV of `a` = 1000 (1000 groups), `b` is generated using `rand.Int31()`
+
 ``` mysql
 mysql> desc dense;
 +-------+---------+------+------+---------+-------+
@@ -95,7 +97,11 @@ mysql> desc dense;
 | b     | int(11) | YES  |      | NULL    |       |
 +-------+---------+------+------+---------+-------+
 2 rows in set (0.00 sec)
+```
 
+* sparse: 10000000 rows, NDV of `a` = 1000 (1000 groups), NDV of `b` = 32
+
+``` mysql
 mysql> desc sparse;
 +-------+---------+------+------+---------+-------+
 | Field | Type    | Null | Key  | Default | Extra |
