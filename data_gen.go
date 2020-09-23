@@ -33,7 +33,7 @@ func init() {
 	flag.BoolVar(&usepw, "p", false, "Login password")
 }
 
-func initDB(silent bool) {
+func initDB() {
 	if usepw {
 		_, err := fmt.Scanln(&passwd)
 		if err != nil {
@@ -43,14 +43,10 @@ func initDB(silent bool) {
 
 	conn_str := fmt.Sprintf("%s:%s@tcp(%s:%v)/%s", user, passwd, host, port, dbname)
 
-	var lg logger.Interface
-	if silent {
-		lg = logger.Default.LogMode(logger.Silent)
-	} else {
-		lg = logger.Default
-	}
 	var err error
-	db, err = gorm.Open(mysql.Open(conn_str), &gorm.Config{Logger: lg})
+	db, err = gorm.Open(mysql.Open(conn_str), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Error),
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -102,7 +98,7 @@ func genData() error {
 
 func main() {
 	flag.Parse()
-	initDB(true)
+	initDB()
 	err := genData()
 	if err != nil {
 		log.Fatal(err)

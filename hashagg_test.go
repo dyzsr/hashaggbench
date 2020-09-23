@@ -81,6 +81,6 @@ func BenchmarkMix(b *testing.B) {
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	initDB(false)
+	initDB()
 	os.Exit(m.Run())
 }
