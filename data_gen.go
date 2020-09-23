@@ -21,6 +21,11 @@ var (
 	user   string
 	usepw  bool
 	passwd string
+
+	rowNum    int
+	groupNum  int
+	batchSize int
+	verbose   bool
 )
 
 func init() {
@@ -31,6 +36,11 @@ func init() {
 	flag.StringVar(&user, "user", "", "")
 	flag.StringVar(&user, "u", "root", "Login user")
 	flag.BoolVar(&usepw, "p", false, "Login password")
+
+	flag.IntVar(&rowNum, "row", 10000000, "Number of rows to generate")
+	flag.IntVar(&groupNum, "group", 1000, "Number of groups")
+	flag.IntVar(&batchSize, "batch", 1000, "Batch size")
+	flag.BoolVar(&verbose, "V", false, "verbose")
 }
 
 func initDB() {
@@ -43,18 +53,19 @@ func initDB() {
 
 	conn_str := fmt.Sprintf("%s:%s@tcp(%s:%v)/%s", user, passwd, host, port, dbname)
 
+	loglvl := logger.Error
+	if verbose {
+		loglvl = logger.Warn
+	}
+
 	var err error
 	db, err = gorm.Open(mysql.Open(conn_str), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Error),
+		Logger: logger.Default.LogMode(loglvl),
 	})
 	if err != nil {
 		panic(err)
 	}
 }
-
-const rowNum = 10000000
-const batchSize = 10000
-const groupNum = 1000
 
 type Table struct{ A, B int }
 
@@ -78,7 +89,7 @@ func genData() error {
 		if err := db.Error; err != nil {
 			return err
 		}
-		bar := progressbar.Default(rowNum, table.name)
+		bar := progressbar.Default(int64(rowNum), table.name)
 		for front := 0; front < rowNum; front += batchSize {
 			end := front + batchSize
 			if end > rowNum {

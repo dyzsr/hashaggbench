@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"gorm.io/hints"
 )
 
 var funcs = []string{"avg", "count", "group_concat", "sum"}
@@ -15,7 +17,7 @@ func BenchmarkDistinct(b *testing.B) {
 			b.Run(fmt.Sprintf("table:%s,func:%s,group:%v", table.name, fn, groupNum), func(b *testing.B) {
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					_, err := db.Table(table.name).Group("a").Select(fmt.Sprintf("%s(distinct b)", fn)).Rows()
+					_, err := db.Clauses(hints.New("HASH_AGG()")).Table(table.name).Group("a").Select(fmt.Sprintf("%s(distinct b)", fn)).Rows()
 					if err != nil {
 						b.Fatal(err)
 					}
@@ -68,7 +70,7 @@ func BenchmarkMix(b *testing.B) {
 			b.Run(fmt.Sprintf("table:%s,funcs:%s,group:%v", table.name, fns, groupNum), func(b *testing.B) {
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					_, err := db.Table(table.name).Group("a").Select(aggFuncsToString(fns)).Rows()
+					_, err := db.Clauses(hints.New("HASH_AGG()")).Table(table.name).Group("a").Select(aggFuncsToString(fns)).Rows()
 					if err != nil {
 						b.Fatal(err)
 					}
