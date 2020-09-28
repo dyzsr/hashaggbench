@@ -9,74 +9,51 @@ import (
 	"gorm.io/hints"
 )
 
-var funcs = []string{"avg", "count", "group_concat", "sum"}
+var concurrency = []int{1, 4, 8, 15, 30}
+var funcs = []string{"avg(distinct b)", "count(distinct b)", "group_concat(distinct b)", "sum(distinct b)"}
 
-func BenchmarkDistinct(b *testing.B) {
-	for _, fn := range funcs {
-		for _, table := range tables {
-			b.Run(fmt.Sprintf("table:%s,func:%s,group:%v", table.name, fn, groupNum), func(b *testing.B) {
-				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
-					_, err := db.Clauses(hints.New("HASH_AGG()")).Table(table.name).Group("a").Select(fmt.Sprintf("%s(distinct b)", fn)).Rows()
-					if err != nil {
-						b.Fatal(err)
-					}
+func BenchmarkSingleGroup(b *testing.B) {
+	for _, table := range tables {
+		for _, fn := range funcs {
+			for _, con := range concurrency {
+				err := db.Exec("set global tidb_executor_concurrency = ?;", con).Error
+				if err != nil {
+					b.Fatal(err)
 				}
-				b.StopTimer()
-			})
+				b.Run(fmt.Sprintf("(table:%s,group_num:1,func:%s,concurrency:%v)", table.name, fn, con), func(b *testing.B) {
+					b.ResetTimer()
+					for i := 0; i < b.N; i++ {
+						_, err := db.Clauses(hints.New("HASH_AGG()")).Table(table.name).Select(fn).Rows()
+						if err != nil {
+							b.Fatal(err)
+						}
+					}
+					b.StopTimer()
+				})
+			}
 		}
 	}
 }
 
-type aggFunc struct {
-	name     string
-	distinct bool
-}
-
-func (f aggFunc) String() string {
-	if f.distinct {
-		return f.name + "_distinct"
-	}
-	return f.name
-}
-
-var mix_funcs = [][]aggFunc{
-	{{"avg", false}, {"count", false}, {"group_concat", false}, {"sum", false}},
-	{{"avg", true}, {"count", false}, {"group_concat", false}, {"sum", false}},
-	{{"avg", false}, {"count", true}, {"group_concat", false}, {"sum", false}},
-	{{"avg", false}, {"count", false}, {"group_concat", true}, {"sum", false}},
-	{{"avg", false}, {"count", false}, {"group_concat", false}, {"sum", true}},
-	{{"avg", true}, {"count", false}, {"group_concat", false}, {"sum", true}},
-	{{"avg", false}, {"count", true}, {"group_concat", false}, {"sum", true}},
-	{{"avg", false}, {"count", false}, {"group_concat", true}, {"sum", true}},
-	{{"avg", true}, {"count", true}, {"group_concat", false}, {"sum", true}},
-	{{"avg", true}, {"count", true}, {"group_concat", true}, {"sum", true}},
-}
-
-func aggFuncsToString(fns []aggFunc) (ret []string) {
-	for _, fn := range fns {
-		if fn.distinct {
-			ret = append(ret, fn.name+"(distinct b)")
-		} else {
-			ret = append(ret, fn.name+"(b)")
-		}
-	}
-	return ret
-}
-
-func BenchmarkMix(b *testing.B) {
-	for _, fns := range mix_funcs {
-		for _, table := range tables {
-			b.Run(fmt.Sprintf("table:%s,funcs:%s,group:%v", table.name, fns, groupNum), func(b *testing.B) {
-				b.ResetTimer()
-				for i := 0; i < b.N; i++ {
-					_, err := db.Clauses(hints.New("HASH_AGG()")).Table(table.name).Group("a").Select(aggFuncsToString(fns)).Rows()
-					if err != nil {
-						b.Fatal(err)
-					}
+func Benchmark1000Groups(b *testing.B) {
+	for _, table := range tables {
+		for _, fn := range funcs {
+			for _, con := range concurrency {
+				err := db.Exec("set global tidb_executor_concurrency = ?;", con).Error
+				if err != nil {
+					b.Fatal(err)
 				}
-				b.StopTimer()
-			})
+				b.Run(fmt.Sprintf("(table:%s,group_num:1000,func:%s,concurrency:%v)", table.name, fn, con), func(b *testing.B) {
+					b.ResetTimer()
+					for i := 0; i < b.N; i++ {
+						_, err := db.Clauses(hints.New("HASH_AGG()")).Table(table.name).Group("a").Select(fn).Rows()
+						if err != nil {
+							b.Fatal(err)
+						}
+					}
+					b.StopTimer()
+				})
+			}
 		}
 	}
 }
