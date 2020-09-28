@@ -6,135 +6,97 @@ This repository benchmarked both implementations with self-generated input data.
 Data generation resides in [`data_gen.go`](https://github.com/dyzsr/hashaggbench/blob/master/data_gen.go),
 and benchmark is in [`hashagg_test.go`](https://github.com/dyzsr/hashaggbench/blob/master/hashagg_test.go)
 
-## Usage
-
-1. Launch TiDB
-2. Generate input data (Load data into TiDB)
-3. Run benchmark
-
-Generate input
-
-```
-go run . -host 127.0.0.1 -port 4000 -user root -db test
-```
-
-Run benchmark
-
-```
-go test -bench=. -count=5 -benchtime=5x -timeout=0
-```
-
-## Benchmark
+## Steps
 
 For [pull/19807](https://github.com/pingcap/tidb/pull/19807), I ran the benchmark in following steps for both implementations:
 
-1. launch TiDB
+###1. Launch TiDB
 
 ```
 make
 bin/tidb-server
 ```
 
-2. generate input data
+### 2. Generate input data
 
 ```
 go run .
 ```
 
-3. run benchmark
+### 3. Run benchmark
 
 ```
-gotest -bench=. -count=5 -benchtime=5x -timeout=0 > rwmutex.result    (for map with sync.RWMutex)
+gotest -bench=. -count=20 -benchtime=1x -timeout=0 > rwmutex.result    (for map with sync.RWMutex)
 ```
 
 ```
-gotest -bench=. -count=5 -benchtime=5x -timeout=0 > syncmap.result    (for sync.Map)
+gotest -bench=. -count=20 -benchtime=1x -timeout=0 > syncmap.result    (for sync.Map)
 ```
 
-4. print the results
+### 4. Print the results
 
 ```
 ╰─➤  benchstat syncmap.result rwmutex.result 
-name                                                                                        old time/op  new time/op  delta
-SingleGroup/(table:ndv_32,group_num:1,func:avg(distinct_b),concurrency:1)-12                 325ms ±26%   377ms ± 8%  +16.01%  (p=0.032 n=5+5)
-SingleGroup/(table:ndv_32,group_num:1,func:avg(distinct_b),concurrency:4)-12                 235ms ± 1%   364ms ± 3%  +54.48%  (p=0.016 n=4+5)
-SingleGroup/(table:ndv_32,group_num:1,func:avg(distinct_b),concurrency:8)-12                 239ms ± 2%   375ms ± 5%  +57.03%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_32,group_num:1,func:avg(distinct_b),concurrency:15)-12                245ms ± 3%   407ms ± 6%  +66.02%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_32,group_num:1,func:avg(distinct_b),concurrency:30)-12                248ms ± 4%   437ms ± 3%  +76.07%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_32,group_num:1,func:count(distinct_b),concurrency:1)-12               287ms ± 2%   293ms ± 2%     ~     (p=0.111 n=4+5)
-SingleGroup/(table:ndv_32,group_num:1,func:count(distinct_b),concurrency:4)-12               219ms ± 1%   300ms ± 4%  +36.98%  (p=0.016 n=4+5)
-SingleGroup/(table:ndv_32,group_num:1,func:count(distinct_b),concurrency:8)-12               221ms ± 2%   322ms ± 7%  +45.48%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_32,group_num:1,func:count(distinct_b),concurrency:15)-12              217ms ± 1%   351ms ± 1%  +61.37%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_32,group_num:1,func:count(distinct_b),concurrency:30)-12              217ms ± 1%   372ms ± 4%  +71.32%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_32,group_num:1,func:group_concat(distinct_b),concurrency:1)-12        329ms ± 1%   342ms ± 8%     ~     (p=0.111 n=4+5)
-SingleGroup/(table:ndv_32,group_num:1,func:group_concat(distinct_b),concurrency:4)-12        234ms ± 1%   363ms ± 4%  +55.08%  (p=0.016 n=4+5)
-SingleGroup/(table:ndv_32,group_num:1,func:group_concat(distinct_b),concurrency:8)-12        231ms ± 3%   402ms ± 6%  +74.59%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_32,group_num:1,func:group_concat(distinct_b),concurrency:15)-12       235ms ± 4%   416ms ± 5%  +77.19%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_32,group_num:1,func:group_concat(distinct_b),concurrency:30)-12       233ms ± 1%   441ms ± 3%  +89.38%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_32,group_num:1,func:sum(distinct_b),concurrency:1)-12                 338ms ±28%   388ms ±12%     ~     (p=0.056 n=5+5)
-SingleGroup/(table:ndv_32,group_num:1,func:sum(distinct_b),concurrency:4)-12                 259ms ±16%   374ms ± 5%  +44.37%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_32,group_num:1,func:sum(distinct_b),concurrency:8)-12                 240ms ± 4%   407ms ± 5%  +69.81%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_32,group_num:1,func:sum(distinct_b),concurrency:15)-12                240ms ± 4%   426ms ± 9%  +77.46%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_32,group_num:1,func:sum(distinct_b),concurrency:30)-12                251ms ± 3%   440ms ± 4%  +75.68%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:avg(distinct_b),concurrency:1)-12               786ms ± 1%   786ms ± 1%     ~     (p=0.548 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:avg(distinct_b),concurrency:4)-12               1.08s ± 1%   0.93s ± 2%  -13.25%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:avg(distinct_b),concurrency:8)-12               1.10s ± 1%   0.96s ± 4%  -13.03%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:avg(distinct_b),concurrency:15)-12              1.11s ± 1%   1.01s ± 4%   -9.24%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:avg(distinct_b),concurrency:30)-12              1.13s ± 3%   1.03s ± 1%   -9.17%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:count(distinct_b),concurrency:1)-12             530ms ± 8%   545ms ± 7%     ~     (p=0.151 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:count(distinct_b),concurrency:4)-12             694ms ±14%   615ms ± 2%     ~     (p=0.151 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:count(distinct_b),concurrency:8)-12             737ms ± 2%   638ms ± 2%  -13.43%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:count(distinct_b),concurrency:15)-12            742ms ± 1%   679ms ± 4%   -8.47%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:count(distinct_b),concurrency:30)-12            758ms ± 2%   702ms ± 2%   -7.39%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:group_concat(distinct_b),concurrency:1)-12      678ms ± 2%   705ms ± 8%     ~     (p=0.056 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:group_concat(distinct_b),concurrency:4)-12      1.06s ± 1%   0.92s ± 4%  -13.11%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:group_concat(distinct_b),concurrency:8)-12      1.09s ± 2%   0.96s ± 1%  -12.03%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:group_concat(distinct_b),concurrency:15)-12     1.09s ± 1%   1.00s ± 1%   -8.76%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:group_concat(distinct_b),concurrency:30)-12     1.11s ± 1%   1.02s ± 1%   -7.97%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:sum(distinct_b),concurrency:1)-12               783ms ± 1%   807ms ± 5%   +3.07%  (p=0.032 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:sum(distinct_b),concurrency:4)-12               1.07s ± 2%   0.92s ± 2%  -14.19%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:sum(distinct_b),concurrency:8)-12               1.09s ± 1%   0.96s ± 2%  -11.74%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:sum(distinct_b),concurrency:15)-12              1.11s ± 1%   1.00s ± 1%   -9.90%  (p=0.008 n=5+5)
-SingleGroup/(table:ndv_rand,group_num:1,func:sum(distinct_b),concurrency:30)-12              1.12s ± 2%   1.02s ± 2%   -9.36%  (p=0.008 n=5+5)
-1000Groups/(table:ndv_32,group_num:1000,func:avg(distinct_b),concurrency:1)-12               572ms ±11%   590ms ± 2%     ~     (p=0.413 n=5+4)
-1000Groups/(table:ndv_32,group_num:1000,func:avg(distinct_b),concurrency:4)-12               372ms ± 3%   361ms ± 3%     ~     (p=0.063 n=5+4)
-1000Groups/(table:ndv_32,group_num:1000,func:avg(distinct_b),concurrency:8)-12               393ms ± 3%   378ms ± 2%   -3.67%  (p=0.008 n=5+5)
-1000Groups/(table:ndv_32,group_num:1000,func:avg(distinct_b),concurrency:15)-12              391ms ± 4%   378ms ± 2%   -3.36%  (p=0.032 n=5+5)
-1000Groups/(table:ndv_32,group_num:1000,func:avg(distinct_b),concurrency:30)-12              385ms ± 2%   377ms ± 4%     ~     (p=0.151 n=5+5)
-1000Groups/(table:ndv_32,group_num:1000,func:count(distinct_b),concurrency:1)-12             480ms ±20%   495ms ± 0%     ~     (p=0.730 n=5+4)
-1000Groups/(table:ndv_32,group_num:1000,func:count(distinct_b),concurrency:4)-12             324ms ± 3%   323ms ± 7%     ~     (p=0.548 n=5+5)
-1000Groups/(table:ndv_32,group_num:1000,func:count(distinct_b),concurrency:8)-12             332ms ± 1%   319ms ± 2%   -3.93%  (p=0.008 n=5+5)
-1000Groups/(table:ndv_32,group_num:1000,func:count(distinct_b),concurrency:15)-12            333ms ± 2%   321ms ± 1%   -3.58%  (p=0.008 n=5+5)
-1000Groups/(table:ndv_32,group_num:1000,func:count(distinct_b),concurrency:30)-12            332ms ± 3%   324ms ± 1%   -2.31%  (p=0.032 n=5+5)
-1000Groups/(table:ndv_32,group_num:1000,func:group_concat(distinct_b),concurrency:1)-12      516ms ±14%   527ms ± 1%     ~     (p=0.905 n=5+4)
-1000Groups/(table:ndv_32,group_num:1000,func:group_concat(distinct_b),concurrency:4)-12      368ms ± 3%   351ms ± 1%   -4.65%  (p=0.016 n=5+4)
-1000Groups/(table:ndv_32,group_num:1000,func:group_concat(distinct_b),concurrency:8)-12      358ms ± 2%   345ms ± 3%   -3.53%  (p=0.008 n=5+5)
-1000Groups/(table:ndv_32,group_num:1000,func:group_concat(distinct_b),concurrency:15)-12     362ms ± 2%   345ms ± 3%   -4.83%  (p=0.016 n=5+5)
-1000Groups/(table:ndv_32,group_num:1000,func:group_concat(distinct_b),concurrency:30)-12     368ms ± 2%   355ms ± 3%     ~     (p=0.056 n=5+5)
-1000Groups/(table:ndv_32,group_num:1000,func:sum(distinct_b),concurrency:1)-12               580ms ± 9%   571ms ± 1%     ~     (p=0.730 n=5+4)
-1000Groups/(table:ndv_32,group_num:1000,func:sum(distinct_b),concurrency:4)-12               366ms ± 2%   361ms ± 7%     ~     (p=0.190 n=4+5)
-1000Groups/(table:ndv_32,group_num:1000,func:sum(distinct_b),concurrency:8)-12               364ms ± 4%   354ms ± 1%     ~     (p=0.095 n=5+5)
-1000Groups/(table:ndv_32,group_num:1000,func:sum(distinct_b),concurrency:15)-12              363ms ± 2%   348ms ± 1%   -3.93%  (p=0.008 n=5+5)
-1000Groups/(table:ndv_32,group_num:1000,func:sum(distinct_b),concurrency:30)-12              363ms ± 2%   355ms ± 0%   -2.28%  (p=0.008 n=5+5)
-1000Groups/(table:ndv_rand,group_num:1000,func:avg(distinct_b),concurrency:1)-12             1.01s ±16%   1.06s ± 0%     ~     (p=0.190 n=5+4)
-1000Groups/(table:ndv_rand,group_num:1000,func:avg(distinct_b),concurrency:4)-12             552ms ± 1%   499ms ± 2%   -9.53%  (p=0.016 n=5+4)
-1000Groups/(table:ndv_rand,group_num:1000,func:avg(distinct_b),concurrency:8)-12             475ms ± 6%   447ms ± 9%     ~     (p=0.095 n=5+5)
-1000Groups/(table:ndv_rand,group_num:1000,func:avg(distinct_b),concurrency:15)-12            470ms ± 2%   434ms ± 2%   -7.67%  (p=0.008 n=5+5)
-1000Groups/(table:ndv_rand,group_num:1000,func:avg(distinct_b),concurrency:30)-12            476ms ± 4%   435ms ± 2%   -8.64%  (p=0.008 n=5+5)
-1000Groups/(table:ndv_rand,group_num:1000,func:count(distinct_b),concurrency:1)-12           732ms ± 1%   750ms ± 1%   +2.42%  (p=0.029 n=4+4)
-1000Groups/(table:ndv_rand,group_num:1000,func:count(distinct_b),concurrency:4)-12           473ms ±16%   403ms ± 1%  -14.67%  (p=0.016 n=5+4)
-1000Groups/(table:ndv_rand,group_num:1000,func:count(distinct_b),concurrency:8)-12           408ms ± 2%   379ms ± 4%   -7.11%  (p=0.008 n=5+5)
-1000Groups/(table:ndv_rand,group_num:1000,func:count(distinct_b),concurrency:15)-12          410ms ± 4%   371ms ± 1%   -9.69%  (p=0.008 n=5+5)
-1000Groups/(table:ndv_rand,group_num:1000,func:count(distinct_b),concurrency:30)-12          416ms ± 3%   384ms ± 3%   -7.70%  (p=0.008 n=5+5)
-1000Groups/(table:ndv_rand,group_num:1000,func:group_concat(distinct_b),concurrency:1)-12    981ms ± 6%   965ms ±15%     ~     (p=1.000 n=5+5)
-1000Groups/(table:ndv_rand,group_num:1000,func:group_concat(distinct_b),concurrency:4)-12    754ms ±50%   683ms ±37%     ~     (p=0.690 n=5+5)
-1000Groups/(table:ndv_rand,group_num:1000,func:group_concat(distinct_b),concurrency:8)-12    707ms ± 7%   587ms ±27%     ~     (p=0.111 n=4+5)
-1000Groups/(table:ndv_rand,group_num:1000,func:group_concat(distinct_b),concurrency:15)-12   1.29s ±59%   0.71s ± 9%     ~     (p=0.111 n=5+4)
-1000Groups/(table:ndv_rand,group_num:1000,func:group_concat(distinct_b),concurrency:30)-12   1.95s ±65%  1.25s ±131%     ~     (p=0.548 n=5+5)
-1000Groups/(table:ndv_rand,group_num:1000,func:sum(distinct_b),concurrency:1)-12             1.61s ±32%   1.25s ± 3%     ~     (p=0.730 n=5+4)
-1000Groups/(table:ndv_rand,group_num:1000,func:sum(distinct_b),concurrency:4)-12            1.18s ±138%   0.98s ±24%     ~     (p=0.310 n=5+5)
-1000Groups/(table:ndv_rand,group_num:1000,func:sum(distinct_b),concurrency:8)-12             2.12s ±60%   0.74s ±23%  -65.01%  (p=0.008 n=5+5)
-1000Groups/(table:ndv_rand,group_num:1000,func:sum(distinct_b),concurrency:15)-12            1.30s ±30%  1.39s ±115%     ~     (p=0.690 n=5+5)
+SingleGroup/(table:ndv_32,group_num:1,func:avg(distinct_b),concurrency:1)-12	363ms ± 4%	361ms ± 3%	~	(p=0.224 n=16+16)
+SingleGroup/(table:ndv_32,group_num:1,func:avg(distinct_b),concurrency:4)-12	243ms ± 6%	247ms ± 2%	+1.48%	(p=0.007 n=18+17)
+SingleGroup/(table:ndv_32,group_num:1,func:avg(distinct_b),concurrency:8)-12	240ms ± 6%	238ms ± 6%	~	(p=0.393 n=20+18)
+SingleGroup/(table:ndv_32,group_num:1,func:avg(distinct_b),concurrency:15)-12	238ms ± 7%	239ms ± 6%	~	(p=0.414 n=20+20)
+SingleGroup/(table:ndv_32,group_num:1,func:avg(distinct_b),concurrency:30)-12	238ms ± 8%	243ms ± 9%	~	(p=0.076 n=20+20)
+SingleGroup/(table:ndv_32,group_num:1,func:count(distinct_b),concurrency:1)-12	286ms ± 4%	286ms ± 4%	~	(p=0.909 n=18+17)
+SingleGroup/(table:ndv_32,group_num:1,func:count(distinct_b),concurrency:4)-12	220ms ± 6%	233ms ± 4%	+6.27%	(p=0.000 n=19+19)
+SingleGroup/(table:ndv_32,group_num:1,func:count(distinct_b),concurrency:8)-12	219ms ± 3%	228ms ± 6%	+4.14%	(p=0.000 n=18+20)
+SingleGroup/(table:ndv_32,group_num:1,func:count(distinct_b),concurrency:15)-12	232ms ±13%	222ms ± 4%	~	(p=0.080 n=19+19)
+SingleGroup/(table:ndv_32,group_num:1,func:count(distinct_b),concurrency:30)-12	218ms ± 5%	224ms ± 8%	~	(p=0.059 n=18+20)
+SingleGroup/(table:ndv_32,group_num:1,func:sum(distinct_b),concurrency:1)-12	372ms ± 5%	363ms ± 4%	−2.49%	(p=0.002 n=18+16)
+SingleGroup/(table:ndv_32,group_num:1,func:sum(distinct_b),concurrency:4)-12	246ms ± 5%	251ms ± 6%	~	(p=0.067 n=17+18)
+SingleGroup/(table:ndv_32,group_num:1,func:sum(distinct_b),concurrency:8)-12	235ms ± 7%	243ms ± 6%	+3.57%	(p=0.004 n=20+20)
+SingleGroup/(table:ndv_32,group_num:1,func:sum(distinct_b),concurrency:15)-12	240ms ± 7%	243ms ± 4%	~	(p=0.253 n=20+20)
+SingleGroup/(table:ndv_32,group_num:1,func:sum(distinct_b),concurrency:30)-12	241ms ±11%	241ms ± 8%	~	(p=0.904 n=20+20)
+SingleGroup/(table:ndv_rand,group_num:1,func:avg(distinct_b),concurrency:1)-12	785ms ±10%	718ms ± 4%	−8.64%	(p=0.000 n=20+19)
+SingleGroup/(table:ndv_rand,group_num:1,func:avg(distinct_b),concurrency:4)-12	1.06s ± 2%	1.08s ± 3%	+2.20%	(p=0.000 n=18+18)
+SingleGroup/(table:ndv_rand,group_num:1,func:avg(distinct_b),concurrency:8)-12	1.08s ± 5%	1.10s ± 4%	~	(p=0.063 n=20+18)
+SingleGroup/(table:ndv_rand,group_num:1,func:avg(distinct_b),concurrency:15)-12	1.10s ± 3%	1.09s ± 2%	~	(p=0.050 n=20+19)
+SingleGroup/(table:ndv_rand,group_num:1,func:avg(distinct_b),concurrency:30)-12	1.11s ± 4%	1.10s ± 2%	~	(p=0.258 n=20+19)
+SingleGroup/(table:ndv_rand,group_num:1,func:count(distinct_b),concurrency:1)-12	478ms ± 9%	472ms ± 3%	~	(p=0.461 n=19+18)
+SingleGroup/(table:ndv_rand,group_num:1,func:count(distinct_b),concurrency:4)-12	721ms ± 6%	664ms ±10%	−7.96%	(p=0.000 n=19+18)
+SingleGroup/(table:ndv_rand,group_num:1,func:count(distinct_b),concurrency:8)-12	728ms ± 6%	666ms ± 6%	−8.47%	(p=0.000 n=20+20)
+SingleGroup/(table:ndv_rand,group_num:1,func:count(distinct_b),concurrency:15)-12	747ms ± 6%	661ms ± 4%	−11.52%	(p=0.000 n=20+20)
+SingleGroup/(table:ndv_rand,group_num:1,func:count(distinct_b),concurrency:30)-12	767ms ± 7%	662ms ± 6%	−13.59%	(p=0.000 n=20+20)
+SingleGroup/(table:ndv_rand,group_num:1,func:sum(distinct_b),concurrency:1)-12	723ms ± 5%	722ms ± 4%	~	(p=0.749 n=20+19)
+SingleGroup/(table:ndv_rand,group_num:1,func:sum(distinct_b),concurrency:4)-12	1.06s ± 5%	1.08s ± 3%	+2.21%	(p=0.004 n=18+20)
+SingleGroup/(table:ndv_rand,group_num:1,func:sum(distinct_b),concurrency:8)-12	1.08s ± 5%	1.09s ± 4%	~	(p=0.096 n=20+20)
+SingleGroup/(table:ndv_rand,group_num:1,func:sum(distinct_b),concurrency:15)-12	1.10s ± 6%	1.10s ± 3%	~	(p=0.758 n=20+20)
+SingleGroup/(table:ndv_rand,group_num:1,func:sum(distinct_b),concurrency:30)-12	1.10s ± 3%	1.12s ± 4%	+1.37%	(p=0.046 n=20+20)
+1000Groups/(table:ndv_32,group_num:1000,func:avg(distinct_b),concurrency:1)-12	572ms ± 5%	568ms ± 5%	~	(p=0.374 n=18+19)
+1000Groups/(table:ndv_32,group_num:1000,func:avg(distinct_b),concurrency:4)-12	356ms ± 8%	356ms ± 9%	~	(p=0.544 n=19+19)
+1000Groups/(table:ndv_32,group_num:1000,func:avg(distinct_b),concurrency:8)-12	370ms ±12%	358ms ± 5%	−3.30%	(p=0.026 n=20+20)
+1000Groups/(table:ndv_32,group_num:1000,func:avg(distinct_b),concurrency:15)-12	378ms ± 6%	349ms ± 7%	−7.52%	(p=0.000 n=20+20)
+1000Groups/(table:ndv_32,group_num:1000,func:avg(distinct_b),concurrency:30)-12	369ms ± 6%	350ms ± 4%	−5.03%	(p=0.000 n=20+20)
+1000Groups/(table:ndv_32,group_num:1000,func:count(distinct_b),concurrency:1)-12	480ms ± 7%	482ms ± 6%	~	(p=0.454 n=17+17)
+1000Groups/(table:ndv_32,group_num:1000,func:count(distinct_b),concurrency:4)-12	313ms ± 7%	305ms ± 6%	−2.68%	(p=0.023 n=20+20)
+1000Groups/(table:ndv_32,group_num:1000,func:count(distinct_b),concurrency:8)-12	312ms ± 4%	303ms ± 4%	−2.72%	(p=0.000 n=20+20)
+1000Groups/(table:ndv_32,group_num:1000,func:count(distinct_b),concurrency:15)-12	311ms ± 5%	308ms ± 4%	~	(p=0.228 n=20+18)
+1000Groups/(table:ndv_32,group_num:1000,func:count(distinct_b),concurrency:30)-12	309ms ± 4%	303ms ± 4%	−1.73%	(p=0.010 n=19+20)
+1000Groups/(table:ndv_32,group_num:1000,func:sum(distinct_b),concurrency:1)-12	550ms ± 5%	550ms ± 4%	~	(p=0.729 n=19+19)
+1000Groups/(table:ndv_32,group_num:1000,func:sum(distinct_b),concurrency:4)-12	361ms ± 6%	342ms ± 7%	−5.32%	(p=0.000 n=19+19)
+1000Groups/(table:ndv_32,group_num:1000,func:sum(distinct_b),concurrency:8)-12	344ms ± 5%	332ms ± 9%	−3.25%	(p=0.002 n=20+20)
+1000Groups/(table:ndv_32,group_num:1000,func:sum(distinct_b),concurrency:15)-12	339ms ± 5%	329ms ± 6%	−2.97%	(p=0.004 n=19+20)
+1000Groups/(table:ndv_32,group_num:1000,func:sum(distinct_b),concurrency:30)-12	346ms ± 7%	337ms ±10%	−2.44%	(p=0.028 n=19+20)
+1000Groups/(table:ndv_rand,group_num:1000,func:avg(distinct_b),concurrency:1)-12	1.00s ± 6%	0.98s ± 3%	~	(p=0.219 n=19+17)
+1000Groups/(table:ndv_rand,group_num:1000,func:avg(distinct_b),concurrency:4)-12	535ms ±10%	498ms ± 5%	−6.89%	(p=0.000 n=20+20)
+1000Groups/(table:ndv_rand,group_num:1000,func:avg(distinct_b),concurrency:8)-12	472ms ±10%	435ms ±10%	−7.75%	(p=0.000 n=20+19)
+1000Groups/(table:ndv_rand,group_num:1000,func:avg(distinct_b),concurrency:15)-12	446ms ±16%	417ms ± 7%	−6.44%	(p=0.000 n=19+20)
+1000Groups/(table:ndv_rand,group_num:1000,func:avg(distinct_b),concurrency:30)-12	463ms ±12%	435ms ± 8%	−6.05%	(p=0.009 n=20+20)
+1000Groups/(table:ndv_rand,group_num:1000,func:count(distinct_b),concurrency:1)-12	678ms ± 5%	687ms ± 4%	~	(p=0.075 n=18+19)
+1000Groups/(table:ndv_rand,group_num:1000,func:count(distinct_b),concurrency:4)-12	436ms ± 8%	405ms ± 8%	−7.21%	(p=0.000 n=19+20)
+1000Groups/(table:ndv_rand,group_num:1000,func:count(distinct_b),concurrency:8)-12	391ms ±12%	364ms ± 8%	−6.91%	(p=0.000 n=20+20)
+1000Groups/(table:ndv_rand,group_num:1000,func:count(distinct_b),concurrency:15)-12	391ms ±11%	360ms ± 8%	−7.85%	(p=0.000 n=20+20)
+1000Groups/(table:ndv_rand,group_num:1000,func:count(distinct_b),concurrency:30)-12	397ms ±11%	362ms ± 7%	−8.90%	(p=0.000 n=20+20)
+1000Groups/(table:ndv_rand,group_num:1000,func:sum(distinct_b),concurrency:1)-12	984ms ± 3%	979ms ± 4%	~	(p=0.271 n=18+19)
+1000Groups/(table:ndv_rand,group_num:1000,func:sum(distinct_b),concurrency:4)-12	533ms ±10%	487ms ± 6%	−8.54%	(p=0.000 n=19+18)
+1000Groups/(table:ndv_rand,group_num:1000,func:sum(distinct_b),concurrency:8)-12	446ms ±11%	425ms ±14%	−4.54%	(p=0.011 n=19+20)
+1000Groups/(table:ndv_rand,group_num:1000,func:sum(distinct_b),concurrency:15)-12	439ms ±14%	410ms ±10%	−6.51%	(p=0.002 n=20+20)
+1000Groups/(table:ndv_rand,group_num:1000,func:sum(distinct_b),concurrency:30)-12	445ms ±10%	411ms ± 9%	−7.74%	(p=0.000 n=20+20) 
 ```
 
 ## Testdata
@@ -180,10 +142,6 @@ SELECT /*+ HASH_AGG() */ count(distinct b) FROM `ndv_32`
 
 SELECT /*+ HASH_AGG() */ count(distinct b) FROM `ndv_rand`
 
-SELECT /*+ HASH_AGG() */ group_concat(distinct b) FROM `ndv_32`
-
-SELECT /*+ HASH_AGG() */ group_concat(distinct b) FROM `ndv_rand`
-
 SELECT /*+ HASH_AGG() */ sum(distinct b) FROM `ndv_32`
 
 SELECT /*+ HASH_AGG() */ sum(distinct b) FROM `ndv_rand`
@@ -200,10 +158,6 @@ SELECT /*+ HASH_AGG() */ avg(distinct b) FROM `ndv_rand` GROUP BY `a`
 SELECT /*+ HASH_AGG() */ count(distinct b) FROM `ndv_32` GROUP BY `a`
 
 SELECT /*+ HASH_AGG() */ count(distinct b) FROM `ndv_rand` GROUP BY `a`
-
-SELECT /*+ HASH_AGG() */ group_concat(distinct b) FROM `ndv_32` GROUP BY `a`
-
-SELECT /*+ HASH_AGG() */ group_concat(distinct b) FROM `ndv_rand` GROUP BY `a`
 
 SELECT /*+ HASH_AGG() */ sum(distinct b) FROM `ndv_32` GROUP BY `a`
 

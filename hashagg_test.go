@@ -10,7 +10,7 @@ import (
 )
 
 var concurrency = []int{1, 4, 8, 15, 30}
-var funcs = []string{"avg(distinct b)", "count(distinct b)", "group_concat(distinct b)", "sum(distinct b)"}
+var funcs = []string{"avg(distinct b)", "count(distinct b)", "sum(distinct b)"}
 
 func BenchmarkSingleGroup(b *testing.B) {
 	for _, table := range tables {
